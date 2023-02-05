@@ -1,6 +1,7 @@
 # DBADashExt
-DBADash Extension - Alerting
-This is v0.1 of the DBADash Alerting Extenstion.
+## DBADash Extension - Alerting Project
+
+This is v0.1 of the DBADash Alerting Extenstion Project.
 
 Please keep in mind that this is still wip and changes are most likely to occur. 
 
