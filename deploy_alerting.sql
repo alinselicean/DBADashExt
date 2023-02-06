@@ -1367,10 +1367,11 @@ end;';
 		if @debug = 1
 		begin
 			/* add few dummy rows to test with */
-			-- [alert_id], [TotalCPU], [SQLProcessCPU], [Instance], [InstanceID], [threshold], [status], [action]
-			insert into #cpu values(3, 35,1,'SRV-DEMO01',1,10,'OFF','OFF->ON');
-			insert into #cpu values(3, 55,1,'SRV-DEMO02',2,10,'OFF','OFF->ON');
-			insert into #cpu values(3, 83,1,'SRV-DEMO03',3,10,'OFF','OFF->ON');
+			-- [alert_id], [TotalCPU], [Instance], [InstanceID], [threshold], [status], [action]
+			insert into #cpu([alert_id], [Counter], [Instance], [InstanceID], [threshold], [status], [action])
+			values	 (@alert_id, 35, 'SRV-DEMO01', 1, 10, 'OFF', 'OFF->ON')
+					,(@alert_id, 55, 'SRV-DEMO02', 2, 10, 'OFF', 'OFF->ON')
+					,(@alert_id, 83, 'SRV-DEMO03', 3, 10, 'OFF', 'OFF->ON');
 		end;
 
 		/* get the defaults first */
