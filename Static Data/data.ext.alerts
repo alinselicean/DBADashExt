@@ -70,12 +70,12 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','alin-ioan.selicean@visma.com',
+</body></html>','your_email',
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
-				0,10000
+				0,'10000'
 			),
 			(	2,'Blocking - Processes',1,null,5,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
@@ -91,12 +91,12 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','alin-ioan.selicean@visma.com',
+</body></html>','your_email',
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
-				0,2
+				0,'2'
 			),
 			(	3,'High CPU',1,null,0,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
@@ -112,12 +112,12 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','alin-ioan.selicean@visma.com',
+</body></html>','your_email',
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
-				0,80
+				0,'80'
 			),
 			(	4,'High CPU - Recovery',1,null,0,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
@@ -133,7 +133,7 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','alin-ioan.selicean@visma.com',
+</body></html>','your_email',
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
@@ -149,12 +149,14 @@ actual alerts
 <tr>
 	<th>Instance name</th>
 	<th>Warning</th>
+	<th>Drive details (warning)</th>
 	<th>Critical</th>
+	<th>Drive details (critical)</th>
 </tr>
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','alin-ioan.selicean@visma.com',
+</body></html>','your_email',
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
