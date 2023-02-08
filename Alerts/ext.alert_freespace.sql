@@ -22,7 +22,7 @@ begin
 	set nocount on;
 	set transaction isolation level read uncommitted;
 	--declare 
-	--	 @alert_name varchar(128) = 'Queries - Long Duration'
+	--	 @alert_name varchar(128) = 'Disk Free Space'
 	--	,@tagname nvarchar(50) = NULL
 	--	,@tagvalue nvarchar(50) = NULL
 	--	,@is_recursive_call bit = 0
@@ -56,7 +56,9 @@ begin
 	declare @alert_date datetime = getdate();
 
 	if @debug = 1 raiserror('Checking / Raising [%s] alert',10,1,@alert_name) with nowait;
-	create table #results([alert_id] int, [Instance] nvarchar(128), [InstanceID] int, [DrivesInCritical] int, [DrivesInWarning] int);
+	drop table if exists #results;
+	create table #results([alert_id] int, [Instance] nvarchar(128), [InstanceID] int, [DrivesInCritical] int, [DrivesInWarning] int, 
+							[DetailsDrivesInCritical] varchar(max), [DetailsDrivesInWarning] varchar(max));
 	set @dynSQL = N'use [##DBADashDB##];
 declare @tagid smallint=-1;
 set	@err_OUT = 0;
@@ -85,6 +87,18 @@ begin
 			src.[InstanceID],
 			sum(case when src.[PctFreeSpace] < src.[DriveCriticalThreshold] then 1 else 0 end) as [DrivesInCritical],
 			sum(case when src.[PctFreeSpace] < src.[DriveWarningThreshold] then 1 else 0 end) as [DrivesInWarning]
+			,coalesce(stuff((	select '';'' + upper(ds.[name]) + '' ('' + format(ds.[TotalGB],''N2'') + ''GB / '' + format(ds.[FreeGB],''N2'') + ''GB / '' + format(ds.[PctFreeSpace],''N2'') + ''% free)''
+								from [##DBADASHDB##].dbo.DriveStatus ds
+								where ds.[InstanceID] = src.[InstanceID] --and ds.[SnapshotDate] = src.[SnapshotDate]
+									and ds.[PctFreeSpace] < ds.[DriveCriticalThreshold]
+								for xml path('''')
+							),1,1,''''),''n/a'') as [DetailsDrivesInCritical]
+			,coalesce(stuff((	select '';'' + upper(ds.[name]) + '' ('' + format(ds.[TotalGB],''N2'') + ''GB / '' + format(ds.[FreeGB],''N2'') + ''GB / '' + format(ds.[PctFreeSpace],''N2'') + ''% free)''
+								from [##DBADASHDB##].dbo.DriveStatus ds
+								where ds.[InstanceID] = src.[InstanceID] --and ds.[SnapshotDate] = src.[SnapshotDate]
+									and ds.[PctFreeSpace] < ds.[DriveWarningThreshold]
+								for xml path('''')
+							),1,1,''''),''n/a'') as [DetailsDrivesInWarning]
 	from [##DBADashDB##].dbo.DriveStatus src
 	inner join [##DBADashDB##].dbo.InstancesMatchingTags(@TagID) i on src.[InstanceID] = I.[InstanceID]
 	inner join dates d on d.[InstanceID] = src.[InstanceID] and d.[SnapshotDateUtc] = src.[SnapshotDate]
@@ -92,8 +106,10 @@ begin
 	where ii.[IsActive] = 1
 	group by src.[InstanceDisplayName], src.[InstanceID]
 	)
-	insert into #results([alert_id], [Instance], [InstanceID], [DrivesInCritical], [DrivesInWarning])
-	select [alert_id], [InstanceDisplayName], [InstanceID], [DrivesInCritical], [DrivesInWarning] from cte
+	insert into #results([alert_id], [Instance], [InstanceID], [DrivesInCritical], [DrivesInWarning],[DetailsDrivesInCritical],[DetailsDrivesInWarning])
+	select [alert_id], [InstanceDisplayName], [InstanceID], [DrivesInCritical], [DrivesInWarning], 
+		[DetailsDrivesInCritical], [DetailsDrivesInWarning]
+	from cte
 	where [DrivesInCritical] + [DrivesInWarning] > 0;
 	set @rows_OUT = @@rowcount;
 end;';
@@ -194,13 +210,16 @@ end;';
 					set @table = (	select 
 										td = b.[Instance], '', 
 										td = format(b.[DrivesInWarning],'N0'),'',
-										td = format(b.[DrivesInCritical],'N0'),''
+										td = replace(b.[DetailsDrivesInWarning],';','<br/>'), '', 
+										td = format(b.[DrivesInCritical],'N0'),'',
+										td = replace(b.[DetailsDrivesInCritical],';','<br/>'), ''
 									from #drv b
 									inner join #ovr ovr on b.[instance] = ovr.[instance]
 									inner join #list l on ovr.[audience] = l.[audience]
 									where l.[audience] = @audience
 									for xml path('tr')
 								);
+					set @table = replace(replace(@table,'&lt;','<'),'&gt;','>');
 					set @instances = stuff((select ',' + b.[Instance] 
 											from #drv b
 											inner join #ovr ovr on b.[instance] = ovr.[instance]
@@ -208,6 +227,7 @@ end;';
 											where l.[audience] = @audience
 											order by b.[Instance] for xml path('')),1,1,'');
 
+					if @debug =  1 select cast(@table as xml);
 					select distinct
 						@webhook = ovr.[webhook],
 						@webhook_alert_template = ovr.[webhook_alert_template],
@@ -261,4 +281,3 @@ end;';
 	end;
 end;
 go
-
