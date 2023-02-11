@@ -9,6 +9,7 @@ go
 					values	 ('Alert/DBMailProfile','DBA Mail Profile','Database Mail profile to be used to send notifications')
 							,('DBADash/DatabaseName','DBADashDB','The name of the DBADash repository database')
 							,('Reports/TopBlockers/MinBlockedWaitTimeMs', '10000', 'The wait time (in milliseconds) threshold for top blockers')
+							,('Reports/TopBlockers/TopNRows', '10', 'The number of top blockers to be included in the report. The alert will use a hard coded value of 5')
 							) p([name],[value],[description])
 				)
 merge into [ext].[parameters] tgt 
