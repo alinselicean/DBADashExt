@@ -8,7 +8,8 @@ go
 					-- add new params as you need
 					values	 ('Alert/DBMailProfile','DBA Mail Profile','Database Mail profile to be used to send notifications')
 							,('DBADash/DatabaseName','DBADashDB','The name of the DBADash repository database')
-					) p([name],[value],[description])
+							,('Reports/TopBlockers/MinBlockedWaitTimeMs', '10000', 'The wait time (in milliseconds) threshold for top blockers')
+							) p([name],[value],[description])
 				)
 merge into [ext].[parameters] tgt 
 using src on (src.[name] = tgt.[name])
