@@ -190,6 +190,34 @@ actual alerts
 				',"icon_emoji": ":bell_orange:"',
 				0,null
 			)
+			,(	7,'Top Head Blockers',1,null,0,null,'1900-01-01 00:00:00.000',
+				-- webhook details (specific for Slack)
+				0, null,
+				-- email section
+'<html><body style="font-face:Tahoma;font-size:10pt">All<br/>These are the top blockers since last check:<br/>
+<table border="1" style="font-family:Tahoma;font-size:10pt">
+<tr>
+	<th>Instance ID</th> 
+	<th>Instance</th> 
+	<th>SQL Handle</th> 
+	<th>Occurrences</th> 
+	<th>Total Block Count</th> 
+	<th>Total Block Wait Time (s)</th>
+	<th>Total Block Count Recursive</th> 
+	<th>Total Block Wait Time Recursive (s)</th> 
+	<th>Avg Duration (ms)</th>
+	<th>Query</th>
+</tr>
+##TABLE##
+</table>
+##WIKILINK##
+</body></html>','your_email',
+				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
+				',"icon_emoji": ":bell_red:"',
+				',"icon_emoji": ":bell_green:"',
+				',"icon_emoji": ":bell_orange:"',
+				0,'@MinutesBack int=15,@MinBlockWaitTimeRecursive int=10000'
+			)
 		) a([alert_id],[alert_name],[alert_env],[alert_wiki],[repeat_notification_interval],[escalation_interval],
 			[last_notification],[send_to_webhook],[webhook_alert_template],[email_alert_template],[audience],[alarm_emoji],
 			[normal_emoji],[continue_emoji],[is_muted],[default_threshold])
