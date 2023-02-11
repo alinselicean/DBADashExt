@@ -197,6 +197,7 @@ actual alerts
 '<html><body style="font-face:Tahoma;font-size:10pt">All<br/>These are the top blockers since last check:<br/>
 <table border="1" style="font-family:Tahoma;font-size:10pt">
 <tr>
+	<th>Rank</th> 
 	<th>Instance ID</th> 
 	<th>Instance</th> 
 	<th>SQL Handle</th> 
