@@ -87,13 +87,13 @@ begin
 			src.[InstanceID],
 			sum(case when src.[PctFreeSpace] < src.[DriveCriticalThreshold] then 1 else 0 end) as [DrivesInCritical],
 			sum(case when src.[PctFreeSpace] < src.[DriveWarningThreshold] then 1 else 0 end) as [DrivesInWarning]
-			,coalesce(stuff((	select '';'' + upper(ds.[name]) + '' ('' + format(ds.[TotalGB],''N2'') + ''GB / '' + format(ds.[FreeGB],''N2'') + ''GB / '' + format(ds.[PctFreeSpace],''N2'') + ''% free)''
+			,coalesce(stuff((	select '';'' + upper(ds.[name]) + '' ('' + format(ds.[TotalGB],''N2'') + ''GB / '' + format(ds.[FreeGB],''N2'') + ''GB / '' + format(ds.[PctFreeSpace] * 100.,''N2'') + ''% free)''
 								from [##DBADASHDB##].dbo.DriveStatus ds
 								where ds.[InstanceID] = src.[InstanceID] --and ds.[SnapshotDate] = src.[SnapshotDate]
 									and ds.[PctFreeSpace] < ds.[DriveCriticalThreshold]
 								for xml path('''')
 							),1,1,''''),''n/a'') as [DetailsDrivesInCritical]
-			,coalesce(stuff((	select '';'' + upper(ds.[name]) + '' ('' + format(ds.[TotalGB],''N2'') + ''GB / '' + format(ds.[FreeGB],''N2'') + ''GB / '' + format(ds.[PctFreeSpace],''N2'') + ''% free)''
+			,coalesce(stuff((	select '';'' + upper(ds.[name]) + '' ('' + format(ds.[TotalGB],''N2'') + ''GB / '' + format(ds.[FreeGB],''N2'') + ''GB / '' + format(ds.[PctFreeSpace] * 100.,''N2'') + ''% free)''
 								from [##DBADASHDB##].dbo.DriveStatus ds
 								where ds.[InstanceID] = src.[InstanceID] --and ds.[SnapshotDate] = src.[SnapshotDate]
 									and ds.[PctFreeSpace] < ds.[DriveWarningThreshold]
