@@ -7,6 +7,8 @@ go
 
 alter procedure [ext].[report_topblockers]
 (	@alert_mode varchar(10) = 'Report'	/* can be Report (default) or Alert */
+	,@rerun bit = 0
+	,@debug bit = 0
 )
 as
 begin
@@ -46,15 +48,17 @@ begin
 	declare @instances varchar(max);
 	declare @rows int;
 	declare @alert_date datetime = getdate();
-	declare @debug bit = 1;
+	--declare @debug bit = 1;
 	declare @top int = 10;
 
 	if @debug = 1 raiserror('Checking / Raising [%s] alert',10,1,@alert_name) with nowait;
 	drop table if exists #results;
 	drop table if exists #outcome;
-	create table #results(	[Rank] int, [InstanceID] int, [Instance] nvarchar(128), [SQLHandle] varchar(128), [Occurrences] int, 
-							[TotalBlockCount] int, [TotalBlockWaitTimeMs] bigint, [TotalBlockCountRecursive] int,	[TotalBlockWaitTimeRecursiveMs] bigint,
-							[AvgDuration (ms)] int, [TopBlockerTSQL] nvarchar(max));
+	create table #results(	[Rank] int, [InstanceID] int, [Instance] nvarchar(128), [SQLHandle] varchar(128), 
+							[Occurrences] bigint, 
+							[TotalBlockCount] bigint, [TotalBlockWaitTimeMs] bigint, 
+							[TotalBlockCountRecursive] bigint, [TotalBlockWaitTimeRecursiveMs] bigint,
+							[AvgDuration (ms)] bigint, [TopBlockerTSQL] nvarchar(max));
 	create table #outcome([rows] int, [err] int);
 	set @dynSQL = N'use [##DBADASHDB##];
 declare @rows int = 0;
@@ -84,12 +88,12 @@ declare @top int = ##TOP##;
 			cte.[InstanceID],
 			(select distinct sq.[Instance] from cte sq where sq.[InstanceID] = cte.[InstanceID]) as [Instance],
 			cte.[sql_handle] as [SQLHandle],
-			count(cte.[sql_handle]) as [Occurrences],
-			sum(cte.[BlockCount]) as [TotalBlockCount],
-			sum(cte.[BlockWaitTimeMs]) as [TotalBlockWaitTimeMs],
-			sum(cte.[BlockCountRecursive]) as [TotalBlockCountRecursive],
-			sum(cte.[BlockWaitTimeRecursiveMs]) as [TotalBlockWaitTimeRecursiveMs],
-			avg(cte.[Duration (ms)]) as [AvgDuration (ms)]
+			count_big(cte.[sql_handle]) as [Occurrences],
+			sum(cast(cte.[BlockCount] as bigint)) as [TotalBlockCount],
+			sum(cast(cte.[BlockWaitTimeMs] as bigint)) as [TotalBlockWaitTimeMs],
+			sum(cast(cte.[BlockCountRecursive] as bigint)) as [TotalBlockCountRecursive],
+			sum(cast(cte.[BlockWaitTimeRecursiveMs] as bigint)) as [TotalBlockWaitTimeRecursiveMs],
+			avg(cast(cte.[Duration (ms)] as bigint)) as [AvgDuration (ms)]
 			,stuff(replace((	select distinct '','' + sq.[query_text] 
 								from cte sq where sq.[sql_handle] = cte.[sql_handle] and sq.[InstanceID] = cte.[InstanceID] 
 								for xml path('''')),''&#x0D;'',''''),1,1,'''') as [TopBlockerTSQL]
@@ -122,7 +126,10 @@ declare @top int = ##TOP##;
 		/* Only the top 5 head blockers will be included in the notification when running in Alert mode */
 		set @top = 5;
 	end;
-	if @debug = 1 set @MinutesBack = 10080;
+	if @debug = 1 or @rerun = 1
+	begin
+		set @MinutesBack = 10080;
+	end;
 	set @thresholds = case 
 						when @alert_mode = 'Alert' then ext.fn_get_alert_threshold(@alert_id, NULL, NULL, NULL)
 						else '@MinutesBack int=' + cast(@MinutesBack as varchar(10)) + ',@MinBlockWaitTimeRecursive int=' + @MinBlockWaitTimeRecursive
@@ -246,8 +253,8 @@ declare @top int = ##TOP##;
 										td = format(b.[TotalBlockWaitTimeMs] / 1000., 'N2'), '', 
 										td = b.[TotalBlockCountRecursive],  '', 
 										td = format(b.[TotalBlockWaitTimeRecursiveMs] / 1000., 'N2'),  '', 
-										td = b.[AvgDuration (ms)], '', 
-										td = b.[TopBlockerTSQL], ''
+										td = format(b.[AvgDuration (ms)],'N0'), '', 
+										td = coalesce(nullif(b.[TopBlockerTSQL],''),'n/a'), ''
 									from #results b
 									inner join #ovr ovr on b.[instance] = ovr.[instance]
 									inner join #list l on ovr.[audience] = l.[audience]
@@ -283,7 +290,7 @@ declare @top int = ##TOP##;
 						@webhook_template = @webhook_alert_template;
 
 					/* update the [last_occurrence] column for the affected instances */
-					if @alert_mode = 'Report'
+					if @alert_mode = 'Report' and @rerun = 0
 					begin
 						merge into [ext].[alert_history] as tgt
 						using (	select distinct @alert_id as [alert_id], b.[instance] 
