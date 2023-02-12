@@ -32,6 +32,7 @@ begin
 
 	/* alert variables */
 	declare
+		@alert_id int,
 		@send_to_webhook bit = 0,
 		@last_notification datetime,
 		@repeat_notification_interval int,
@@ -43,16 +44,13 @@ begin
 		@alert_level tinyint,
 		@alert_level_desc varchar(64),
 		@override_audience bit,
-		@username varchar(128);
+		@username varchar(128),
+		@alert_date datetime = getdate();
 	declare @alert_wiki varchar(256) = null;
 	declare @webhookresponse varchar(max);
 	declare @webhookstatus varchar(max);
 	declare @error bit = 0;
 	declare @body varchar(max);
-
-	declare @blackout_day int;
-	declare @blackout_start_time varchar(8);
-	declare @blackout_end_time varchar(8);
 
 	/* check @alert_type for valid range values */
 	if @alert_type not in (0, 1, 2, 255)
@@ -132,8 +130,9 @@ begin
 		set @is_muted = 0;
 		if @alert_type <> 255 and @alert_name <> 'Custom'
 		begin
-			/* not custom alert, get the metadata */
+			/* not a custom alert, get the metadata */
 			select
+				@alert_id = aa.[alert_id],
 				@send_to_webhook = aa.[send_to_webhook],
 				@alert_wiki = case when aa.[alert_wiki] like '%github%' then replace(aa.[alert_wiki],' ','-') else aa.[alert_wiki] end,
 				@last_notification = aa.[last_notification],
@@ -151,39 +150,31 @@ begin
 				@alert_level_desc = aa.[alert_level_desc],
 				@override_audience = aa.[override_audience],
 				@emoji = aa.[emoji],
-				@username = aa.[username],
-
-				@blackout_day = ab.[day_of_week],
-				@blackout_start_time = ab.[blackout_start_time],
-				@blackout_end_time = ab.[blackout_end_time]
-			--SELECT *
-			FROM [ext].[all_alerts] aa
-			left join [ext].[alert_blackouts] ab on ab.[alert_id] = aa.[alert_id]
+				@username = aa.[username]
+			from [ext].[all_alerts] aa
 				where [alert_name] = @alert_name and ([alert_env] = 0 or [alert_env] = @env);
 		end
 
-		if @blackout_day is not null and @blackout_end_time is not null and @blackout_start_time is not null
+		/* check blackout window */
+		if ([ext].[fn_get_blackout_window_status](@alert_date, @alert_id)) = 1
 		begin
-			if (	@blackout_day = datepart(weekday, getdate()) or							/* specific day */
-					@blackout_day = -1 or													/* ... any day */
-					(@blackout_day = 0 and datepart(weekday, getdate()) between 1 and 5)	/* any weekday */
-				)
-				and getdate() between 
-						convert(datetime, convert(varchar(10),datefromparts(year(getdate()), month(getdate()), day(getdate()))) + ' ' + @blackout_start_time) and 
-						convert(datetime, convert(varchar(10),datefromparts(year(getdate()), month(getdate()), day(getdate()))) + ' ' + @blackout_end_time)
-			begin
-				/* alert was raised inside a blackout window, do not send anything */
-				raiserror('INFO: [%s] alert raised inside a blackout window (from %s to %s)', 10, 1, @alert_name, @blackout_start_time, @blackout_end_time) with nowait;
-				goto skip_alerting;
-			end;
+			/* alert was raised inside a blackout window, do not send anything */
+			raiserror('INFO: [%s] alert raised inside a blackout window', 10, 1, @alert_name) with nowait;
+			goto skip_alerting;
 		end;
 
 		/* disable webhook if something's missing */
-		if @alert_webhook IS NULL OR (select [value_in_use] from sys.configurations where [name] = 'Ole Automation Procedures') <> 1 
+		if @send_to_webhook = 1 and (select [value_in_use] from sys.configurations where [name] = 'Ole Automation Procedures') <> 1
+		begin
+			raiserror('"Ole Automation Procedures" configuration option is not enabled -- sending to webhook is not possible', 10, 1) with nowait;
 			set @send_to_webhook = 0;
+		end;
 
-		if @send_to_webhook = 1 AND @webhook_template IS NULL 
+		if @send_to_webhook = 1 and (@webhook_template is null or @alert_webhook is null) 
+		begin
+			raiserror('Either webhook URL was not provided or the webhook message template is missing -- sending to webhook is not possible', 10, 1) with nowait;
 			set @send_to_webhook = 0;
+		end;
 
 		set @instances = coalesce(@instances, 'not_specified');
 		set @subj = coalesce(@subj, @alert_name + ' alert was raised');
@@ -214,6 +205,7 @@ begin
 					@body_format = 'HTML', 
 					@importance = 'HIGH';
 		end;
+
 		/* send to webhook, if it's enabled and possible */
 		if @send_to_webhook = 1 AND @is_muted = 0
 		begin
