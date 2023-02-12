@@ -135,7 +135,7 @@ begin
 			/* not custom alert, get the metadata */
 			select
 				@send_to_webhook = aa.[send_to_webhook],
-				@alert_wiki = aa.[alert_wiki],
+				@alert_wiki = case when aa.[alert_wiki] like '%github%' then replace(aa.[alert_wiki],' ','-') else aa.[alert_wiki] end,
 				@last_notification = aa.[last_notification],
 				@repeat_notification_interval = aa.[repeat_notification_interval],
 				@escalation_interval = aa.[escalation_interval],
