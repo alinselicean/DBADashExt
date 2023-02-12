@@ -1,7 +1,7 @@
 use [DBADashExt];
 go
 
-truncate table [ext].[alert_blackouts];
+--truncate table [ext].[alert_blackouts];
 
 -- insert blackout window for the Template alert (id=-2)
 insert into [ext].[alert_blackouts]([alert_id],[day_of_week],[start_time],[end_time])
