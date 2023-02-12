@@ -11,6 +11,3 @@ High level overview:
 You are free to download, change, modify the scripts here to better suit your needs. For now, this script is under no license.
 
 With regards to the DBADash, full licensing terms can be found here: https://github.com/trimble-oss/dba-dash
-
-## Known issues
-1. There is a bug in the ext.alert_webhooks table definition (webhook_id computed column) - this is now fixed (2023-02-08)
