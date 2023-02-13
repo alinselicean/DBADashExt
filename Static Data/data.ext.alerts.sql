@@ -1,6 +1,9 @@
 use [DBADashExt];
 go
 
+declare @your_email varchar(256) = 'sqlalert@rtc.ro';
+declare @alert_env int = coalesce((select [id] from ext.environment where [is_local] = 1),1);
+
 --truncate table [ext].[alerts];
 set identity_insert [ext].[alerts] on;
 ;with src as 
@@ -23,7 +26,7 @@ set identity_insert [ext].[alerts] on;
 		a.[default_threshold]
 from (	
 		values
-			(	-2,'Template Alert',0,'http://url_to_alert_wiki',5,null,'1900-01-01 00:00:00.000',
+			(	-2,'Template Alert',@alert_env,'http://url_to_alert_wiki',5,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
 				1, '{"text":"##ALERTNAME##: Alert text for ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
@@ -56,7 +59,7 @@ from (
 /* 
 actual alerts 
 */
-			(	1,'Blocking - Duration',1,null,5,null,'1900-01-01 00:00:00.000',
+			(	1,'Blocking - Duration',@alert_env,null,5,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: Excessive blocking detected on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
@@ -70,14 +73,14 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','your_email',
+</body></html>',@your_email,
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
 				0,'10000'
 			),
-			(	2,'Blocking - Processes',1,null,5,null,'1900-01-01 00:00:00.000',
+			(	2,'Blocking - Processes',@alert_env,null,5,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: Excessive blocking detected on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
@@ -91,14 +94,14 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','your_email',
+</body></html>',@your_email,
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
 				0,'2'
 			),
-			(	3,'High CPU',1,null,0,null,'1900-01-01 00:00:00.000',
+			(	3,'High CPU',@alert_env,null,0,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: High CPU on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
@@ -112,14 +115,14 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','your_email',
+</body></html>',@your_email,
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
 				0,'80'
 			),
-			(	4,'High CPU - Recovery',1,null,0,null,'1900-01-01 00:00:00.000',
+			(	4,'High CPU - Recovery',@alert_env,null,0,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: CPU recovered on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
@@ -133,14 +136,14 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','your_email',
+</body></html>',@your_email,
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
 				0,null
 			),
-			(	5,'Disk Free Space',1,null,0,null,'1900-01-01 00:00:00.000',
+			(	5,'Disk Free Space',@alert_env,null,0,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: Some of the disks on the following instances are low on free space: ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
@@ -156,14 +159,14 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','your_email',
+</body></html>',@your_email,
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
 				0,null
 			)
-			,(	6,'DB Growths',1,null,0,null,'1900-01-01 00:00:00.000',
+			,(	6,'DB Growths',@alert_env,null,0,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: One or more databases on the following instances have grown since last check: ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
@@ -183,14 +186,14 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','your_email',
+</body></html>',@your_email,
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
 				',"icon_emoji": ":bell_orange:"',
 				0,null
 			)
-			,(	7,'Top Head Blockers',1,null,0,null,'1900-01-01 00:00:00.000',
+			,(	7,'Top Head Blockers',@alert_env,null,0,null,'1900-01-01 00:00:00.000',
 				-- webhook details (specific for Slack)
 				0, null,
 				-- email section
@@ -210,7 +213,7 @@ actual alerts
 ##TABLE##
 </table>
 ##WIKILINK##
-</body></html>','your_email',
+</body></html>',@your_email,
 				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
 				',"icon_emoji": ":bell_red:"',
 				',"icon_emoji": ":bell_green:"',
