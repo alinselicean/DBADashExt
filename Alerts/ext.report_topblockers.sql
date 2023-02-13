@@ -58,7 +58,7 @@ begin
 							[Occurrences] bigint, 
 							[TotalBlockCount] bigint, [TotalBlockWaitTimeMs] bigint, 
 							[TotalBlockCountRecursive] bigint, [TotalBlockWaitTimeRecursiveMs] bigint,
-							[AvgDuration (ms)] bigint, [TopBlockerTSQL] nvarchar(max));
+							[AvgDuration (ms)] bigint, [TopBlockerTSQL] nvarchar(max), [AdditionalInfo] varchar(max));
 	create table #outcome([rows] int, [err] int);
 	set @dynSQL = N'use [##DBADASHDB##];
 declare @rows int = 0;
@@ -74,7 +74,7 @@ declare @top int = ##TOP##;
 			src.[query_hash],src.[sql_handle],
 			src.[batch_text] as [batch_text],
 			src.[text] as [query_text],
-			src.[status], src.[open_transaction_count], src.[TopSessionWaits], src.[BlockCount], src.[BlockCountRecursive], src.[BlockWaitTimeMs], 
+			src.[session_id], src.[status], src.[open_transaction_count], src.[TopSessionWaits], src.[BlockCount], src.[BlockCountRecursive], src.[BlockWaitTimeMs], 
 			src.[BlockWaitTimeRecursiveMs], src.[Duration (ms)]
 		from [dbo].[RunningQueriesInfo] src 
 		inner join [dbo].[InstanceInfo] ii on src.[InstanceID] = ii.[InstanceID]
@@ -97,15 +97,24 @@ declare @top int = ##TOP##;
 			,stuff(replace((	select distinct '','' + sq.[query_text] 
 								from cte sq where sq.[sql_handle] = cte.[sql_handle] and sq.[InstanceID] = cte.[InstanceID] 
 								for xml path('''')),''&#x0D;'',''''),1,1,'''') as [TopBlockerTSQL]
+			,''SPIDs: '' + cast((	select count(distinct sq1.[session_id]) 
+								from cte sq1 
+								where cte.[sql_handle] = sq1.[sql_handle] and cte.[InstanceID] = sq1.[InstanceID]
+							) as varchar(5)) + ''; '' +  
+					stuff((	select distinct '';Status: '' + sq.[status] + '';TxCnt: '' + cast(sq.[open_transaction_count] as varchar(3))
+							from cte sq
+							where sq.[sql_handle] = cte.[sql_handle] and sq.[InstanceID] = cte.[InstanceID] 
+							for xml path('''')
+			),1,1,'''') as [AdditionalInfo]
 		from cte
 		group by cte.[InstanceID], cte.[sql_handle]
 	)
 	insert into #results(	[Rank], [InstanceID], [Instance], [SQLHandle], [Occurrences], [TotalBlockCount], [TotalBlockWaitTimeMs],
-							[TotalBlockCountRecursive], [TotalBlockWaitTimeRecursiveMs], [AvgDuration (ms)], [TopBlockerTSQL])
+							[TotalBlockCountRecursive], [TotalBlockWaitTimeRecursiveMs], [AvgDuration (ms)], [TopBlockerTSQL], [AdditionalInfo])
 	select 
 		row_number() over(order by [TotalBlockWaitTimeRecursiveMs] desc) as [Rank],
 		[InstanceID], [Instance], [SQLHandle], [Occurrences], [TotalBlockCount], [TotalBlockWaitTimeMs],
-		[TotalBlockCountRecursive], [TotalBlockWaitTimeRecursiveMs], [AvgDuration (ms)], [TopBlockerTSQL]	
+		[TotalBlockCountRecursive], [TotalBlockWaitTimeRecursiveMs], [AvgDuration (ms)], [TopBlockerTSQL], [AdditionalInfo]
 	from qry
 	order by [TotalBlockWaitTimeRecursiveMs] desc;
 	set @rows = @@rowcount;
@@ -245,16 +254,15 @@ declare @top int = ##TOP##;
 					/* build the message blocks required for the actual alert */
 					set @table = (	select 
 										td = b.[Rank], '', 
-										td = b.[InstanceID],  '', 
+										--td = b.[InstanceID],  '', 
 										td = b.[Instance],  '', 
 										td = b.[SQLHandle],  '', 
 										td = b.[Occurrences],  '', 
-										td = b.[TotalBlockCount],  '', 
-										td = format(b.[TotalBlockWaitTimeMs] / 1000., 'N2'), '', 
-										td = b.[TotalBlockCountRecursive],  '', 
-										td = format(b.[TotalBlockWaitTimeRecursiveMs] / 1000., 'N2'),  '', 
+										td = format(b.[TotalBlockCount], 'N0') + '/' + format(b.[TotalBlockWaitTimeMs] / 1000., 'N2'), '', 
+										td = format(b.[TotalBlockCountRecursive], 'N0') + '/' + format(b.[TotalBlockWaitTimeRecursiveMs] / 1000., 'N2'),  '', 
 										td = format(b.[AvgDuration (ms)],'N0'), '', 
-										td = coalesce(nullif(b.[TopBlockerTSQL],''),'n/a'), ''
+										td = coalesce(nullif(b.[TopBlockerTSQL],''),'n/a'), '', 
+										td = coalesce(b.[AdditionalInfo],'n/a'), ''
 									from #results b
 									inner join #ovr ovr on b.[instance] = ovr.[instance]
 									inner join #list l on ovr.[audience] = l.[audience]
