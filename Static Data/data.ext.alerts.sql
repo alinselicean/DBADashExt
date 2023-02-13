@@ -10,7 +10,7 @@ declare @table_style varchar(max) = '<head><style>#payload {
   width: 100%;
 }
 
-#payload td, #customers th {
+#payload td, #payload th {
   border: 1px solid #ddd;
   padding: 8px;
 }
