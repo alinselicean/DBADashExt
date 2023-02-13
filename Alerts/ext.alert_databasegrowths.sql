@@ -7,9 +7,6 @@ go
 alter procedure [ext].[alert_databasegrowths]
 (	@debug bit = 0
 )
-/*
-The SP will check both criteria: Long running queries and Blocked Processes
-*/
 as
 begin
 	set nocount on;
@@ -185,7 +182,7 @@ begin
 									inner join #ovr ovr on b.[instance] = ovr.[instance]
 									inner join #list l on ovr.[audience] = l.[audience]
 									where l.[audience] = @audience
-									order by b.[Instance] for xml path('')),1,1,'');
+									order by ',' + b.[Instance] for xml path('')),1,1,'');
 
 			if @debug =  1 select cast(@table as xml);
 			select distinct
