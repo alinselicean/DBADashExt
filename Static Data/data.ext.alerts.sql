@@ -3,7 +3,32 @@ go
 
 declare @your_email varchar(256) = 'sqlalert@rtc.ro';
 declare @alert_env int = coalesce((select [id] from ext.environment where [is_local] = 1),1);
+declare @body_style varchar(max) = 'style="font-face:Tahoma;font-size:10pt"';
+declare @table_style varchar(max) = '<head><style>#payload {
+  font-family: Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
 
+#payload td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#payload tr:nth-child(even){background-color: #f2f2f2;}
+
+#payload tr:hover {background-color: #ddd;}
+
+#payload th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #04AA6D;
+  color: white;
+}
+</style>
+</head><br/>
+';
 --truncate table [ext].[alerts];
 set identity_insert [ext].[alerts] on;
 ;with src as 
@@ -30,8 +55,8 @@ from (
 				-- webhook details (specific for Slack)
 				1, '{"text":"##ALERTNAME##: Alert text for ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
-				'<html><body style="font-family:Tahoma;font-size:10pt;">Greetings<br/>This is the text for the alert detected for ##INSTANCES##. See the table below for more details.
-		<br/><br/><table border="1" style="font-family:Tahoma;font-size:10pt">
+				'<html><body '+ @body_style + '>' + @table_style + 'Greetings<br/>This is the text for the alert detected for ##INSTANCES##. See the table below for more details.
+		<br/><br/><table id="payload">
 		<tr>	
 			<th>Column 1</th>
 			<th>Column 2</th>
@@ -63,8 +88,8 @@ actual alerts
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: Excessive blocking detected on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
-'<html><body style="font-face:Tahoma;font-size:10pt">All<br/>Blocking on the instances listed below is exceeding the thresholds:<br/>
-<table border="1" style="font-family:Tahoma;font-size:10pt">
+'<html><body <body '+ @body_style + '>' + @table_style + 'All<br/>Blocking on the instances listed below is exceeding the thresholds:<br/>
+<table id="payload">
 <tr>
 	<th>Instance name</th>
 	<th>Sessions</th>
@@ -84,8 +109,8 @@ actual alerts
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: Excessive blocking detected on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
-'<html><body style="font-face:Tahoma;font-size:10pt">All<br/>Blocking on the instances listed below is exceeding the thresholds:<br/>
-<table border="1" style="font-family:Tahoma;font-size:10pt">
+'<html><body <body '+ @body_style + '>' + @table_style + 'All<br/>Blocking on the instances listed below is exceeding the thresholds:<br/>
+<table id="payload">
 <tr>
 	<th>Instance name</th>
 	<th>Sessions</th>
@@ -105,8 +130,8 @@ actual alerts
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: High CPU on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
-'<html><body style="font-face:Tahoma;font-size:10pt">All<br/>CPU on the following instances is exceeding the thresholds:<br/>
-<table border="1" style="font-family:Tahoma;font-size:10pt">
+'<html><body <body '+ @body_style + '>' + @table_style + 'All<br/>CPU on the following instances is exceeding the thresholds:<br/>
+<table id="payload">
 <tr>
 	<th>Instance name</th>
 	<th>Total CPU</th>
@@ -126,8 +151,8 @@ actual alerts
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: CPU recovered on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
-'<html><body style="font-face:Tahoma;font-size:10pt">All<br/>CPU on the following instances recovered:<br/>
-<table border="1" style="font-family:Tahoma;font-size:10pt">
+'<html><body <body '+ @body_style + '>' + @table_style + 'All<br/>CPU on the following instances recovered:<br/>
+<table id="payload">
 <tr>
 	<th>Instance name</th>
 	<th>Total CPU</th>
@@ -147,8 +172,8 @@ actual alerts
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: Some of the disks on the following instances are low on free space: ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
-'<html><body style="font-face:Tahoma;font-size:10pt">All<br/>Some fo the disks on the following instances are low on free disk space:<br/>
-<table border="1" style="font-family:Tahoma;font-size:10pt">
+'<html><body <body '+ @body_style + '>' + @table_style + 'All<br/>Some fo the disks on the following instances are low on free disk space:<br/>
+<table id="payload">
 <tr>
 	<th>Instance name</th>
 	<th>Warning</th>
@@ -170,8 +195,8 @@ actual alerts
 				-- webhook details (specific for Slack)
 				0, '{"text":"##ALERTNAME##: One or more databases on the following instances have grown since last check: ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
 				-- email section
-'<html><body style="font-face:Tahoma;font-size:10pt">All<br/>One or more databases on the following instances have grown since last check:<br/>
-<table border="1" style="font-family:Tahoma;font-size:10pt">
+'<html><body <body '+ @body_style + '>' + @table_style + 'All<br/>One or more databases on the following instances have grown since last check:<br/>
+<table id="payload">
 <tr>
 	<th>Instance</th>	
 	<th>Database</th>
@@ -197,8 +222,8 @@ actual alerts
 				-- webhook details (specific for Slack)
 				0, null,
 				-- email section
-'<html><body style="font-face:Tahoma;font-size:10pt">All<br/>These are the top blockers since last check:<br/>
-<table border="1" style="font-family:Tahoma;font-size:10pt">
+'<html><body <body '+ @body_style + '>' + @table_style + 'All<br/>These are the top blockers since last check:<br/>
+<table id="payload">
 <tr>
 	<th>Rank</th> 
 	<th>Instance</th> 
