@@ -198,16 +198,14 @@ actual alerts
 <table border="1" style="font-family:Tahoma;font-size:10pt">
 <tr>
 	<th>Rank</th> 
-	<th>Instance ID</th> 
 	<th>Instance</th> 
 	<th>SQL Handle</th> 
 	<th>Occurrences</th> 
-	<th>Total Block Count</th> 
-	<th>Total Block Wait Time (s)</th>
-	<th>Total Block Count Recursive</th> 
-	<th>Total Block Wait Time Recursive (s)</th> 
+	<th>Total Block Count / Wait Time (s)</th>
+	<th>Total Block Count Recursive / Wait Time (s)</th> 
 	<th>Avg Duration (ms)</th>
 	<th>Query</th>
+	<th>Additional Info</th>
 </tr>
 ##TABLE##
 </table>
