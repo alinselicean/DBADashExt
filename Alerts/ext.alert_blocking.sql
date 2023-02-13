@@ -46,6 +46,7 @@ begin
 	declare @default_audience varchar(512);
 	declare @default_webhook_alert_template nvarchar(max);
 	declare @default_email_alert_template nvarchar(max);
+	declare @blocking_found bit = 0;
 
 	declare @webhook varchar(256);
 	declare @audience varchar(512);
@@ -168,6 +169,9 @@ end;';
 			end;
 			if exists(select 1 from #blk)
 			begin
+				/* blocking issues found - we'll need to generate the top head blockers alert as well */
+				set @blocking_found = 1;
+
 				/* get the defaults first */
 				select 
 					@default_audience = a.[audience],
@@ -321,6 +325,7 @@ end;';
 		raiserror('There was an error trying to raise the [%s] alert.', 10, 1, @alert_name) with nowait;
 	end;
 
+	if @blocking_found = 1 exec [ext].[report_top blockers] @alert_mode = 'Alert';
 	if @is_recursive_call = 1 return;
 
 	/* Now look for blocking -- number of blocked processes */
