@@ -197,7 +197,7 @@ begin
 																		from string_split(@instances,',') 
 																		for xml path('tr')), '&gt;','>'), '&lt;','<'));
 
-			set @subj = 'DBADAsh -- ' + @subj;
+			set @subj = 'DBADash -- ' + @subj;
 			exec msdb.dbo.sp_send_dbmail
 					@profile_name = @dbmail_profile,
 					@recipients = @audience,
