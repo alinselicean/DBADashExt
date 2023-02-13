@@ -11,3 +11,7 @@ High level overview:
 You are free to download, change, modify the scripts here to better suit your needs. For now, this script is under no license.
 
 With regards to the DBADash, full licensing terms can be found here: https://github.com/trimble-oss/dba-dash
+
+Current development directions:
+- add more alerts. To name a few: corruption, running queries (duration, critical waits, etc), DBs with no or old backups 
+- currently, overriding alert defaults only works if alerts are targeted at specific tag names / tag values. There's a development direction to overcome this limitation and make overrides work all the time
