@@ -1,7 +1,7 @@
 use [DBADashExt];
 go
 
-declare @your_email varchar(256) = 'sqlalert@rtc.ro';
+declare @your_email varchar(256) = 'your_email';
 declare @alert_env int = coalesce((select [id] from ext.environment where [is_local] = 1),1);
 declare @body_style varchar(max) = 'style="font-face:Tahoma;font-size:10pt"';
 declare @table_style varchar(max) = '<head><style>#payload {
