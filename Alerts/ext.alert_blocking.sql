@@ -325,7 +325,12 @@ end;';
 		raiserror('There was an error trying to raise the [%s] alert.', 10, 1, @alert_name) with nowait;
 	end;
 
-	if @blocking_found = 1 exec [ext].[report_top blockers] @alert_mode = 'Alert';
+	if @blocking_found = 1 and coalesce((select cast([value] as int) 
+										from [ext].[parameters] 
+										where [name] = 'Reports/TopBlockers/IncludeWithAlert'),0) = 1
+	begin
+		exec [ext].[report_topblockers] @alert_mode = 'Alert';
+	end;
 	if @is_recursive_call = 1 return;
 
 	/* Now look for blocking -- number of blocked processes */
