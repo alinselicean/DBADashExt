@@ -76,8 +76,7 @@ if object_id('[ext].[alert_queries]','P') is null exec('create procedure [ext].[
 go
 
 alter procedure [ext].[alert_queries]
-(	 @alert_name varchar(128) = 'Queries'
-	,@tagname nvarchar(50) = NULL
+(	 @tagname nvarchar(50) = NULL
 	,@tagvalue nvarchar(50) = NULL
 	,@is_recursive_call bit = 0
 	,@debug bit = 0
@@ -95,6 +94,7 @@ begin
 	--	,@tagvalue nvarchar(50) = NULL
 	--	,@is_recursive_call bit = 0
 	--	,@debug bit = 1;
+	declare @alert_name varchar(128) = 'Queries'
 	declare @alert_id int = (select [alert_id] from [ext].[alerts] where [alert_name] = @alert_name);
 
 	/* Get the DBADash repository database name - if no record exists, it defaults to DBADashDB */
