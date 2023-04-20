@@ -7,7 +7,12 @@ go
 if object_id('[ext].[send_alert_notification]') is null exec('create PROCEDURE [ext].[send_alert_notification] as begin select 1 end;');
 go
 
-alter procedure [ext].[send_alert_notification]
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+ALTER procedure [ext].[send_alert_notification]
 (
 	@alert_name nvarchar(128) = 'custom',
 	@alert_type tinyint = 255,					/* 255=custom, 0=normal, 1=alarm, 2=continue */
@@ -189,6 +194,10 @@ begin
 																			for xml path('tr')), '&gt;','>'), '&lt;','<'))
 			else
 				set @body = replace(@body, '##TABLE##', @table);
+
+			set @alert_wiki = replace(@alert_wiki, '##alertname##', @alert_name);
+			if @alert_wiki like '%github%' 
+				set @alert_wiki = replace(@alert_wiki,' ','-');
 
 			set @body = replace(@body, '##WIKILINK##' , coalesce('Click <a href="' + @alert_wiki + '">here</a> for details and troubleshooting info',''));
 			set @body = replace(@body, '##ALERTNAME##', coalesce(@alert_name,''));
