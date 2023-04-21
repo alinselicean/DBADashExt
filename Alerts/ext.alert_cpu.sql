@@ -18,7 +18,7 @@ begin
 	--declare 	 
 	--	 @tagname nvarchar(50) = NULL
 	--	,@tagvalue nvarchar(50) = NULL
-	--	,@debug bit = 1
+	--	,@debug bit = 0
 
 	declare @alert_name nvarchar(128) = N'High CPU';
 	declare @threshold int = coalesce((select [default_threshold] from [ext].[alerts] where [alert_name] = @alert_name),80);
@@ -131,7 +131,7 @@ end;';
 		into #cpu
 		-- #results + [threshold] + [status] + [action]
 		from th  
-		left join [ext].[alert_history] ah on th.[alert_id] = ah.[alert_id] and th.[Instance] = ah.[instance];
+		left join [ext].[alert_history] ah on th.[alert_id] = ah.[alert_id] and th.[Instance] collate database_default = ah.[instance] collate database_default;
 
 		if @debug = 1
 		begin
@@ -331,7 +331,7 @@ end;';
 					[last_occurrence] = @alert_date,
 					[status] = case when cpu.[action] = 'ON->OFF' then 'OFF' else 'ON' end
 			from #cpu cpu
-			inner join [ext].[alert_history] tgt on tgt.[alert_id] = cpu.[alert_id] and tgt.[instance] = cpu.[Instance]
+			inner join [ext].[alert_history] tgt on tgt.[alert_id] = cpu.[alert_id] and tgt.[instance] collate database_default = cpu.[Instance] collate database_default
 			where cpu.[action] in ('OFF->ON', 'ON->OFF');
 		end
 		else

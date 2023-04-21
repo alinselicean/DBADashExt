@@ -26,7 +26,7 @@ begin
 	--	,@tagname nvarchar(50) = NULL
 	--	,@tagvalue nvarchar(50) = NULL
 	--	,@is_recursive_call bit = 0
-	--	,@debug bit = 1;
+	--	,@debug bit = 0;
 	declare @alert_id int = (select [alert_id] from [ext].[alerts] where [alert_name] = @alert_name);
 
 	/* Get the DBADash repository database name - if no record exists, it defaults to DBADashDB */
@@ -252,10 +252,10 @@ end;';
 					merge into [ext].[alert_history] as tgt
 					using (	select @alert_id as [alert_id], b.[instance] 
 							from #drv b
-							inner join #ovr ovr on b.[instance] = ovr.[instance]
-							inner join #list l on ovr.[audience] = l.[audience]
+							inner join #ovr ovr on b.[instance] collate database_default = ovr.[instance] collate database_default
+							inner join #list l on ovr.[audience] collate database_default = l.[audience] collate database_default
 							where l.[audience] = @audience) as src
-						on (src.[instance] = tgt.[instance] and src.[alert_id] = tgt.[alert_id])
+						on (src.[instance] collate database_default = tgt.[instance] collate database_default and src.[alert_id] = tgt.[alert_id])
 					when matched then
 						update set tgt.[last_occurrence] = @alert_date
 					when not matched by target then
