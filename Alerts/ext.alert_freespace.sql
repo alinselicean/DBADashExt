@@ -21,12 +21,12 @@ as
 begin
 	set nocount on;
 	set transaction isolation level read uncommitted;
-	declare 
-		 @alert_name varchar(128) = 'Disk Free Space'
-		,@tagname nvarchar(50) = NULL
-		,@tagvalue nvarchar(50) = NULL
-		,@is_recursive_call bit = 0
-		,@debug bit = 0;
+	--declare 
+	--	 @alert_name varchar(128) = 'Disk Free Space'
+	--	,@tagname nvarchar(50) = NULL
+	--	,@tagvalue nvarchar(50) = NULL
+	--	,@is_recursive_call bit = 0
+	--	,@debug bit = 0;
 	declare @alert_id int = (select [alert_id] from [ext].[alerts] where [alert_name] = @alert_name);
 
 	/* Get the DBADash repository database name - if no record exists, it defaults to DBADashDB */
