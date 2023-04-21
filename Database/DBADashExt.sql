@@ -5,5 +5,5 @@ use [master];
 
 if db_id('DBADashExt') is null
 begin
-	exec('create database [DBADashExt];');
+	exec('create database [DBADashExt] collate SQL_Latin1_General_CP1_CI_AS;');
 end;
