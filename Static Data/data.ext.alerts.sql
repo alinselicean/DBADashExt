@@ -1,7 +1,7 @@
 use [DBADashExt];
 go
 
-declare @your_email varchar(256) = 'your_email';
+declare @your_email varchar(256) = 'alin-ioan.selicean@visma.com';
 declare @alert_env int = coalesce((select [id] from ext.environment where [is_local] = 1),1);
 declare @body_style varchar(max) = 'style="font-face:Tahoma;font-size:10pt"';
 declare @table_style varchar(max) = '<head><style>#payload {
@@ -246,6 +246,29 @@ actual alerts
 				',"icon_emoji": ":bell_orange:"',
 				0,'@MinutesBack int=15,@MinBlockWaitTimeRecursive int=10000'
 			)
+			,(	8,'Idle Sessions',@alert_env,null,0,null,'1900-01-01 00:00:00.000',
+				-- webhook details (specific for Slack)
+				1, '{"text":"##ALERTNAME##: Idle sessions with open transaction found on ##INSTANCES##. ##WIKILINK##"##EMOJI####USERNAME##}',
+				-- email section
+'<html><body <body '+ @body_style + '>' + @table_style + 'All<br/>Idle session(s) with open transaction(s) have been detected on the following DB servers:<br/>
+<table id="payload">
+<tr>
+	<th>Instance</th> 
+	<th>IIS</th> 
+	<th>Idle sessions</th> 
+	<th>Total Block Count Recursive</th>
+	<th>Total Block Count Recursive Wait Time (s)</th> 
+</tr>
+##TABLE##
+</table>
+##WIKILINK##
+</body></html>',@your_email,
+				-- webhook emojis (values are specific to Slack - check the specs for other platforms)
+				',"icon_emoji": ":bell_red:"',
+				',"icon_emoji": ":bell_green:"',
+				',"icon_emoji": ":bell_orange:"',
+				0,'@Sessions int=1,@MaxBlockWaitTimeRecursive int=10000'
+			)		
 		) a([alert_id],[alert_name],[alert_env],[alert_wiki],[repeat_notification_interval],[escalation_interval],
 			[last_notification],[send_to_webhook],[webhook_alert_template],[email_alert_template],[audience],[alarm_emoji],
 			[normal_emoji],[continue_emoji],[is_muted],[default_threshold])
